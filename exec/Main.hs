@@ -1,8 +1,14 @@
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module Main where
 
 import Control.Exception (SomeException)
+import Options.Generic (Generic, ParseRecord, type (<?>))
 import Text.Trifecta.Delta (Delta(..))
 
 import qualified Control.Exception
@@ -19,26 +25,31 @@ import qualified Options.Generic
 import qualified System.Exit
 import qualified System.IO
 
+newtype Options = Options
+    { explain :: Bool <?> "Explain error messages in detail"
+    } deriving (Generic, ParseRecord)
+
 main :: IO ()
-main = handle (Dhall.detailed (do
+main = handle (do
     GHC.IO.Encoding.setLocaleEncoding GHC.IO.Encoding.utf8
-    () <- Options.Generic.getRecord "Compile Dhall to JSON"
+    Options {..} <- Options.Generic.getRecord "Compile Dhall to JSON"
 
-    inText <- Data.Text.Lazy.IO.getContents
+    (if Options.Generic.unHelpful explain then Dhall.detailed else id) (do
+        inText <- Data.Text.Lazy.IO.getContents
 
-    expr <- case Dhall.Parser.exprFromText (Directed "(stdin)" 0 0 0 0) inText of
-        Left  err  -> Control.Exception.throwIO err
-        Right expr -> return expr
+        expr <- case Dhall.Parser.exprFromText (Directed "(stdin)" 0 0 0 0) inText of
+            Left  err  -> Control.Exception.throwIO err
+            Right expr -> return expr
 
-    expr' <- Dhall.Import.load expr
-    case Dhall.TypeCheck.typeOf expr' of
-        Left  err -> Control.Exception.throwIO err
-        Right _   -> return ()
+        expr' <- Dhall.Import.load expr
+        case Dhall.TypeCheck.typeOf expr' of
+            Left  err -> Control.Exception.throwIO err
+            Right _   -> return ()
 
-    json <- case Dhall.JSON.dhallToJSON expr' of
-        Left err  -> Control.Exception.throwIO err
-        Right json -> return json
-    Data.ByteString.Lazy.putStr (Data.Aeson.encode json) ))
+        json <- case Dhall.JSON.dhallToJSON expr' of
+            Left err  -> Control.Exception.throwIO err
+            Right json -> return json
+        Data.ByteString.Lazy.putStr (Data.Aeson.encode json) ))
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
