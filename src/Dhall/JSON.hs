@@ -2,13 +2,91 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE QuasiQuotes        #-}
 
-module Dhall.JSON where
+{-| This library only exports a single `dhallToJSON` function for translating a
+    Dhall syntax tree to a JSON syntax tree for the @aeson@ library
+
+    See the @dhall@ package if you would like to transform Dhall source code
+    into a Dhall syntax tree.  Similarly, see the @aeson@ package if you would
+    like to translate a JSON syntax tree into JSON.
+
+    This package also provides a @dhall-to-json@ executable which you can use to
+    compile Dhall source code directly to JSON for your convenience
+
+    Not all Dhall expressions can be converted to JSON since JSON is not a
+    programming language.  The only things you can convert are:
+
+    * @Bool@s
+    * @Natural@s
+    * @Integer@s
+    * @Double@s
+    * @Text@
+    * @List@s
+    * @Optional@ values
+    * records
+
+    Dhall @Bool@s translate to JSON bools:
+
+> $ dhall-to-json <<< 'True'
+> true
+> $ dhall-to-json <<< 'False'
+> false
+
+    Dhall numbers translate to JSON numbers:
+
+> $ dhall-to-json <<< '+2'
+> 2
+> $ dhall-to-json <<< '2'
+> 2
+> $ dhall-to-json <<< '2.3'
+> 2.3
+
+    Dhall @Text@ translates to JSON text:
+
+> $ dhall-to-json <<< '"ABC"'
+> "ABC"
+
+    Dhall @List@s translate to JSON lists:
+
+> $ dhall-to-json <<< '[1, 2, 3] : List Integer'
+> [1,2,3]
+
+    Dhall @Optional@ values translate to @null@ if absent and the unwrapped
+    value otherwise:
+
+> $ dhall-to-json <<< '[] : Optional Integer'
+> null
+> $ dhall-to-json <<< '[1] : Optional Integer'
+> 1
+
+    Dhall records translate to JSON records:
+
+> $ dhall-to-json <<< '{ foo = 1, bar = True }'
+> {"foo":1,"bar":true}
+
+    Note that you cannot convert Dhall unions since JSON does not support sum
+    types.  You will need to convert your unions to use the above types within
+    Dhall before translating to JSON
+
+    Also, all Dhall expressions are normalized before translation to JSON:
+
+> $ dhall-to-json <<< "True == False"
+> false
+
+-}
+
+module Dhall.JSON (
+    -- * Dhall to JSON
+      dhallToJSON
+
+    -- * Exceptions
+    , CompileError(..)
+    ) where
 
 import Control.Exception (Exception)
 import Data.Aeson (Value)
-import Data.Text.Buildable (Buildable)
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
+import Dhall.TypeCheck (X)
 
 import qualified Data.Aeson
 import qualified Data.Text
@@ -18,9 +96,15 @@ import qualified Data.Vector
 import qualified Dhall.Core
 import qualified NeatInterpolation
 
-data CompileError s a = Unsupported (Expr s a) deriving (Typeable)
+{-| This is the exception type for errors that might arise when translating
+    Dhall to JSON
 
-instance Buildable a => Show (CompileError s a) where
+    Because the majority of Dhall language features do not translate to JSON
+    this just returns the expression that failed
+-}
+data CompileError = Unsupported (Expr X X) deriving (Typeable)
+
+instance Show CompileError where
     show (Unsupported e) =
         Data.Text.unpack [NeatInterpolation.text|
 $_ERROR: Cannot translate to JSON
@@ -38,12 +122,21 @@ The following Dhall expression could not be translated to JSON:
 _ERROR :: Data.Text.Text
 _ERROR = "\ESC[1;31mError\ESC[0m"
 
-instance (Buildable a, Typeable a, Typeable s) => Exception (CompileError s a)
+instance Exception CompileError
 
-dhallToJSON :: Expr s a -> Either (CompileError s a) Value
+{-| Convert a Dhall expression to the equivalent Nix expression
+
+>>> :set -XOverloadedStrings
+>>> :set -XOverloadedLists
+>>> import Dhall.Core
+>>> dhallToJSON (RecordLit [("foo", IntegerLit 1), ("bar", TextLit "ABC")])
+Right (Object (fromList [("foo",Number 1.0),("bar",String "ABC")]))
+>>> fmap Data.Aeson.encode it
+Right "{\"foo\":1,\"bar\":\"ABC\"}"
+-}
+dhallToJSON :: Expr s X -> Either CompileError Value
 dhallToJSON e0 = loop (Dhall.Core.normalize e0)
   where
-    loop :: Expr s a -> Either (CompileError s a) Value
     loop e = case e of 
         Dhall.Core.BoolLit a -> return (Data.Aeson.toJSON a)
         Dhall.Core.NaturalLit a -> return (Data.Aeson.toJSON a)
