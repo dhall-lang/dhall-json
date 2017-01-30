@@ -30,7 +30,7 @@ Library
     Hs-Source-Dirs: src
     Build-Depends:
         base               >= 4.8.0.0  && < 5  ,
-        aeson                                  ,
+        aeson              >= 1.0.0.0  && < 1.2,
         dhall              >= 1.0.1    && < 1.2,
         neat-interpolation                < 0.4,
         text               >= 0.11.1.0 && < 1.3,
@@ -42,8 +42,8 @@ Executable dhall-to-json
     Hs-Source-Dirs: exec
     Main-Is: Main.hs
     Build-Depends:
-        base            >= 4.8.0.0   && < 5   ,
-        aeson                                 ,
+        base             >= 4.8.0.0  && < 5   ,
+        aeson            >= 1.0.0.0  && < 1.2 ,
         bytestring                      < 0.11,
         dhall            >= 1.0.1    && < 1.2 ,
         dhall-json                            ,
