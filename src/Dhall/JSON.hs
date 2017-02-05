@@ -3,14 +3,19 @@
 {-# LANGUAGE QuasiQuotes        #-}
 
 {-| This library only exports a single `dhallToJSON` function for translating a
-    Dhall syntax tree to a JSON syntax tree for the @aeson@ library
+    Dhall syntax tree to a JSON syntax tree (i.e. a `Value`) for the @aeson@
+    library
+
+    NOTE: The @yaml@ library uses the same `Value` type to represent YAML
+    files, so you can use this to convert Dhall expressions to YAML, too
 
     See the @dhall@ package if you would like to transform Dhall source code
     into a Dhall syntax tree.  Similarly, see the @aeson@ package if you would
     like to translate a JSON syntax tree into JSON.
 
-    This package also provides a @dhall-to-json@ executable which you can use to
-    compile Dhall source code directly to JSON for your convenience
+    This package also provides @dhall-to-json@ and @dhall-to-yaml@ executables
+    which you can use to compile Dhall source code directly to JSON or YAML for
+    your convenience
 
     Not all Dhall expressions can be converted to JSON since JSON is not a
     programming language.  The only things you can convert are:
