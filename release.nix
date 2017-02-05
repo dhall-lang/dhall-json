@@ -13,6 +13,9 @@ let
     packageOverrides = pkgs: {
       haskellPackages = pkgs.haskellPackages.override {
         overrides = haskellPackagesNew: haskellPackagesOld: {
+          aeson =
+            pkgs.haskell.lib.dontCheck haskellPackagesOld.aeson_1_1_0_0;
+
           dhall-json = haskellPackagesNew.callPackage ./default.nix { };
         };
       };

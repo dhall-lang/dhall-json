@@ -1,5 +1,5 @@
 { mkDerivation, aeson, base, bytestring, dhall, neat-interpolation
-, optparse-generic, stdenv, text, trifecta, vector
+, optparse-generic, stdenv, text, trifecta, vector, yaml
 }:
 mkDerivation {
   pname = "dhall-json";
@@ -11,7 +11,7 @@ mkDerivation {
     aeson base dhall neat-interpolation text vector
   ];
   executableHaskellDepends = [
-    aeson base bytestring dhall optparse-generic text trifecta
+    aeson base bytestring dhall optparse-generic text trifecta yaml
   ];
   description = "Dhall to JSON compiler";
   license = stdenv.lib.licenses.bsd3;
