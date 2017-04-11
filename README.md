@@ -1,4 +1,4 @@
-# `dhall-json 1.0.0`
+# `dhall-json 1.0.1`
 
 This `dhall-json` package provides a Dhall to JSON compiler and a Dhall to YAML
 compiler.  The reason this package is called `dhall-json` is that the Haskell
