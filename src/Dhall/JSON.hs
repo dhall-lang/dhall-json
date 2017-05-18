@@ -27,6 +27,7 @@
     * @Text@
     * @List@s
     * @Optional@ values
+    * unions
     * records
 
     Dhall @Bool@s translate to JSON bools:
@@ -68,9 +69,26 @@
 > $ dhall-to-json <<< '{ foo = 1, bar = True }'
 > {"foo":1,"bar":true}
 
-    Note that you cannot convert Dhall unions since JSON does not support sum
-    types.  You will need to convert your unions to use the above types within
-    Dhall before translating to JSON
+    Dhall unions translate to the wrapped value:
+
+> $ dhall-to-json <<< "< Left = +2 | Right : Natural>"
+> 2
+> $ cat config
+> [ < Person = { age = +47, name = "John" }
+>   | Place  : { location : Text }
+>   >
+> , < Place  = { location = "North Pole" }
+>   | Person : { age : Natural, name : Text }
+>   >
+> , < Place  = { location = "Sahara Desert" }
+>   | Person : { age : Natural, name : Text }
+>   >
+> , < Person = { age = +35, name = "Alice" }
+>   | Place  : { location : Text }
+>   >
+> ]
+> $ dhall-to-json <<< "./config"
+> [{"age":47,"name":"John"},{"location":"North Pole"},{"location":"Sahara Desert"},{"age":35,"name":"Alice"}]
 
     Also, all Dhall expressions are normalized before translation to JSON:
 
@@ -114,8 +132,8 @@ instance Show CompileError where
         Data.Text.unpack [NeatInterpolation.text|
 $_ERROR: Cannot translate to JSON
 
-Explanation: Only primitive values, records, ❰List❱s, and ❰Optional❱ values can
-be translated from Dhall to JSON
+Explanation: Only primitive values, records, unions, ❰List❱s, and ❰Optional❱
+values can be translated from Dhall to JSON
 
 The following Dhall expression could not be translated to JSON:
 
@@ -161,4 +179,5 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.RecordLit a -> do
             a' <- traverse loop a
             return (Data.Aeson.toJSON a')
+        Dhall.Core.UnionLit _ b _ -> loop b
         _ -> Left (Unsupported e)
