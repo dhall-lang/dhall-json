@@ -3,7 +3,7 @@
 }:
 mkDerivation {
   pname = "dhall-json";
-  version = "1.0.0";
+  version = "1.0.3";
   src = ./.;
   isLibrary = true;
   isExecutable = true;
@@ -13,6 +13,6 @@ mkDerivation {
   executableHaskellDepends = [
     aeson base bytestring dhall optparse-generic text trifecta yaml
   ];
-  description = "Dhall to JSON compiler";
+  description = "Compile Dhall to JSON or YAML";
   license = stdenv.lib.licenses.bsd3;
 }
