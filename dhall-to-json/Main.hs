@@ -13,6 +13,7 @@ import Text.Trifecta.Delta (Delta(..))
 
 import qualified Control.Exception
 import qualified Data.Aeson
+import qualified Data.Aeson.Encode.Pretty
 import qualified Data.ByteString.Lazy
 import qualified Data.Text.Lazy.IO
 import qualified Dhall
@@ -25,8 +26,9 @@ import qualified Options.Generic
 import qualified System.Exit
 import qualified System.IO
 
-newtype Options = Options
+data Options = Options
     { explain :: Bool <?> "Explain error messages in detail"
+    , pretty  :: Bool <?> "Pretty print generated JSON"
     } deriving (Generic, ParseRecord)
 
 main :: IO ()
@@ -49,7 +51,12 @@ main = handle (do
         json <- case Dhall.JSON.dhallToJSON expr' of
             Left err  -> Control.Exception.throwIO err
             Right json -> return json
-        Data.ByteString.Lazy.putStr (Data.Aeson.encode json) ))
+
+        let encode =
+                if   Options.Generic.unHelpful pretty
+                then Data.Aeson.Encode.Pretty.encodePretty
+                else Data.Aeson.encode
+        Data.ByteString.Lazy.putStr (encode json) ))
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
