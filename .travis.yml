@@ -16,7 +16,7 @@ matrix:
     - env: CABALVER=1.22 GHCVER=7.10.2
       compiler: ": #GHC 7.10.2"
       addons: {apt: {packages: [cabal-install-1.22,ghc-7.10.2], sources: [hvr-ghc]}}
-    - env: CABALVER=1.24 GHCVER=8.0.1
+    - env: CABALVER=1.24 GHCVER=8.0.1 DEPLOY_GITHUB_RELEASE=true
       compiler: ": #GHC 8.0.1"
       addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1], sources: [hvr-ghc]}}
 
@@ -82,6 +82,8 @@ deploy:
   file:
     - dist/build/dhall-to-json/dhall-to-json
     - dist/build/dhall-to-yaml/dhall-to-yaml
+  on:
+    condition: $DEPLOY_GITHUB_RELEASE = true
   skip_cleanup: true
 
 # EOF
