@@ -14,7 +14,7 @@ import Text.Trifecta.Delta (Delta(..))
 import qualified Control.Exception
 import qualified Data.Aeson
 import qualified Data.Aeson.Encode.Pretty
-import qualified Data.ByteString.Lazy
+import qualified Data.ByteString.Lazy.Char8
 import qualified Data.Text.Lazy.IO
 import qualified Dhall
 import qualified Dhall.Import
@@ -56,7 +56,7 @@ main = handle (do
                 if   Options.Generic.unHelpful pretty
                 then Data.Aeson.Encode.Pretty.encodePretty
                 else Data.Aeson.encode
-        Data.ByteString.Lazy.putStr (encode json) ))
+        Data.ByteString.Lazy.Char8.putStrLn (encode json) ))
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
