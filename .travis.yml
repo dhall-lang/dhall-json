@@ -88,6 +88,7 @@ deploy:
   file: "$TRAVIS_OS_NAME.tar.gz"
   on:
     condition: $DEPLOY_GITHUB_RELEASE = true
+    tags: true
   skip_cleanup: true
 
 # EOF
