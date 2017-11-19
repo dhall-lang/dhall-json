@@ -28,7 +28,7 @@ before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
  - if [ "$TRAVIS_OS_NAME" = osx ];
    then
-     brew install cabal-install
+     brew install cabal-install;
    fi
 
 install:
