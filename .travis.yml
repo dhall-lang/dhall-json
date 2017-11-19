@@ -28,6 +28,7 @@ before_install:
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
  - if [ "$TRAVIS_OS_NAME" = osx ];
    then
+     brew update; # Travis issue that should go away: https://github.com/travis-ci/travis-ci/issues/8552
      brew install cabal-install;
    fi
 
