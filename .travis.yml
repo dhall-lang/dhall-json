@@ -19,10 +19,20 @@ matrix:
     - env: CABALVER=1.24 GHCVER=8.0.1 DEPLOY_GITHUB_RELEASE=true
       compiler: ": #GHC 8.0.1"
       addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.1], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.0.1 DEPLOY_GITHUB_RELEASE=true
+      compiler: ": #GHC 8.0.1"
+      os: osx
 
 before_install:
  - unset CC
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+ # Work around travis issue by updating Homebrew: https://github.com/travis-ci/travis-ci/issues/8552
+ - if [ "$TRAVIS_OS_NAME" = osx ];
+   then
+     brew update;
+     brew install cabal-install;
+     brew install gnu-sed --with-default-names;
+   fi
 
 install:
  - cabal --version
