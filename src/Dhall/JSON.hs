@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE QuasiQuotes        #-}
 
 {-| This library only exports a single `dhallToJSON` function for translating a
     Dhall syntax tree to a JSON syntax tree (i.e. a `Value`) for the @aeson@
@@ -107,6 +106,7 @@ module Dhall.JSON (
 
 import Control.Exception (Exception)
 import Data.Aeson (Value)
+import Data.Monoid ((<>))
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
@@ -117,7 +117,6 @@ import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Builder
 import qualified Data.Vector
 import qualified Dhall.Core
-import qualified NeatInterpolation
 
 {-| This is the exception type for errors that might arise when translating
     Dhall to JSON
@@ -129,16 +128,15 @@ data CompileError = Unsupported (Expr X X) deriving (Typeable)
 
 instance Show CompileError where
     show (Unsupported e) =
-        Data.Text.unpack [NeatInterpolation.text|
-$_ERROR: Cannot translate to JSON
-
-Explanation: Only primitive values, records, unions, ❰List❱s, and ❰Optional❱
-values can be translated from Dhall to JSON
-
-The following Dhall expression could not be translated to JSON:
-
-↳ $txt
-|]
+        Data.Text.unpack $
+            "" <> _ERROR <> ": Cannot translate to JSON                                     \n\
+            \                                                                               \n\
+            \Explanation: Only primitive values, records, unions, ❰List❱s, and ❰Optional❱   \n\
+            \values can be translated from Dhall to JSON                                    \n\
+            \                                                                               \n\
+            \The following Dhall expression could not be translated to JSON:                \n\
+            \                                                                               \n\
+            \↳ " <> txt <> "                                                                "
       where
         txt = Data.Text.Lazy.toStrict (Dhall.Core.pretty e)
 
