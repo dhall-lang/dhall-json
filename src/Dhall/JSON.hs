@@ -163,7 +163,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.NaturalLit a -> return (Data.Aeson.toJSON a)
         Dhall.Core.IntegerLit a -> return (Data.Aeson.toJSON a)
         Dhall.Core.DoubleLit a -> return (Data.Aeson.toJSON a)
-        Dhall.Core.TextLit a -> do
+        Dhall.Core.TextLit (Dhall.Core.Chunks [] a) -> do
             return (Data.Aeson.toJSON (Data.Text.Lazy.Builder.toLazyText a))
         Dhall.Core.ListLit _ a -> do
             a' <- traverse loop a
