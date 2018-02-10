@@ -13,6 +13,8 @@ let
     packageOverrides = pkgs: {
       haskellPackages = pkgs.haskellPackages.override {
         overrides = haskellPackagesNew: haskellPackagesOld: {
+          dhall = haskellPackagesNew.callPackage ./dhall.nix { };
+
           dhall-json = haskellPackagesNew.callPackage ./default.nix { };
         };
       };
