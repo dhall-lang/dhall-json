@@ -16,6 +16,9 @@ let
           dhall = haskellPackagesNew.callPackage ./dhall.nix { };
 
           dhall-json = haskellPackagesNew.callPackage ./default.nix { };
+
+          prettyprinter = haskellPackagesNew.callPackage ./prettyprinter.nix { };
+
         };
       };
     };
