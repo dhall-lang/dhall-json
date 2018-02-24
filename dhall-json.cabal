@@ -47,7 +47,7 @@ Executable dhall-to-json
         bytestring                      < 0.11,
         dhall                                 ,
         dhall-json                            ,
-        optparse-generic >= 1.1.1    && < 1.3 ,
+        optparse-generic >= 1.1.1    && < 1.4 ,
         trifecta         >= 1.6      && < 1.8 ,
         text
     GHC-Options: -Wall
@@ -60,7 +60,7 @@ Executable dhall-to-yaml
         bytestring                      < 0.11,
         dhall                                 ,
         dhall-json                            ,
-        optparse-generic >= 1.1.1    && < 1.3 ,
+        optparse-generic >= 1.1.1    && < 1.4 ,
         trifecta         >= 1.6      && < 1.8 ,
         yaml             >= 0.5.0    && < 0.9 ,
         text
