@@ -8,7 +8,7 @@ License-File: LICENSE
 Copyright: 2017 Gabriel Gonzalez
 Author: Gabriel Gonzalez
 Maintainer: Gabriel439@gmail.com
-Bug-Reports: https://github.com/Gabriel439/Haskell-Dhall-JSON-Library/issues
+Bug-Reports: https://github.com/dhall-lang/dhall-json/issues
 Synopsis: Compile Dhall to JSON or YAML
 Description:
     Use this package if you want to compile Dhall expressions to JSON or YAML.
@@ -24,7 +24,7 @@ Description:
 Category: Compiler
 Source-Repository head
     Type: git
-    Location: https://github.com/Gabriel439/Haskell-Dhall-JSON-Library
+    Location: https://github.com/dhall-lang/dhall-json
 
 Library
     Hs-Source-Dirs: src
