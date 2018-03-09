@@ -115,7 +115,6 @@ import qualified Data.Aeson
 import qualified Data.Text
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Builder
-import qualified Data.Vector
 import qualified Dhall.Core
 
 {-| This is the exception type for errors that might arise when translating
@@ -168,12 +167,9 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.ListLit _ a -> do
             a' <- traverse loop a
             return (Data.Aeson.toJSON a')
-        Dhall.Core.OptionalLit _ a ->
-            if Data.Vector.null a
-                then return (Data.Aeson.toJSON (Nothing :: Maybe ()))
-                else do
-                    b <- dhallToJSON (Data.Vector.head a)
-                    return (Data.Aeson.toJSON (Just b))
+        Dhall.Core.OptionalLit _ a -> do
+            a' <- traverse loop a
+            return (Data.Aeson.toJSON a')
         Dhall.Core.RecordLit a -> do
             a' <- traverse loop a
             return (Data.Aeson.toJSON a')
