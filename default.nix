@@ -1,13 +1,13 @@
 { mkDerivation, aeson, aeson-pretty, base, bytestring, dhall
-, optparse-generic, stdenv, text, trifecta, vector, yaml
+, optparse-generic, stdenv, text, trifecta, yaml
 }:
 mkDerivation {
   pname = "dhall-json";
-  version = "1.0.11";
+  version = "1.0.12";
   src = ./.;
   isLibrary = true;
   isExecutable = true;
-  libraryHaskellDepends = [ aeson base dhall text vector ];
+  libraryHaskellDepends = [ aeson base dhall text ];
   executableHaskellDepends = [
     aeson aeson-pretty base bytestring dhall optparse-generic text
     trifecta yaml
