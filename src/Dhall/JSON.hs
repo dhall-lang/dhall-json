@@ -99,19 +99,21 @@
 module Dhall.JSON (
     -- * Dhall to JSON
       dhallToJSON
+    , omitNull
 
     -- * Exceptions
     , CompileError(..)
     ) where
 
 import Control.Exception (Exception)
-import Data.Aeson (Value)
+import Data.Aeson (Value(..))
 import Data.Monoid ((<>))
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
 
 import qualified Data.Aeson
+import qualified Data.HashMap.Strict
 import qualified Data.Text
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Builder
@@ -175,3 +177,18 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
             return (Data.Aeson.toJSON a')
         Dhall.Core.UnionLit _ b _ -> loop b
         _ -> Left (Unsupported e)
+
+-- | Omit record fields that are @null@
+omitNull :: Value -> Value
+omitNull (Object object) =
+    Object (fmap omitNull (Data.HashMap.Strict.filter (/= Null) object))
+omitNull (Array array) =
+    Array (fmap omitNull array)
+omitNull (String string) =
+    String string
+omitNull (Number number) =
+    Number number
+omitNull (Bool bool) =
+    Bool bool
+omitNull Null =
+    Null

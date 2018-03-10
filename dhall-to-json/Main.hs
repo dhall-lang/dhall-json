@@ -27,8 +27,9 @@ import qualified System.Exit
 import qualified System.IO
 
 data Options = Options
-    { explain :: Bool <?> "Explain error messages in detail"
-    , pretty  :: Bool <?> "Pretty print generated JSON"
+    { explain  :: Bool <?> "Explain error messages in detail"
+    , pretty   :: Bool <?> "Pretty print generated JSON"
+    , omitNull :: Bool <?> "Omit record fields that are null"
     } deriving (Generic, ParseRecord)
 
 main :: IO ()
@@ -52,11 +53,16 @@ main = handle (do
             Left err  -> Control.Exception.throwIO err
             Right json -> return json
 
+        let filteredJSON =
+                if Options.Generic.unHelpful omitNull
+                then Dhall.JSON.omitNull json
+                else json
+
         let encode =
                 if   Options.Generic.unHelpful pretty
                 then Data.Aeson.Encode.Pretty.encodePretty
                 else Data.Aeson.encode
-        Data.ByteString.Lazy.Char8.putStrLn (encode json) ))
+        Data.ByteString.Lazy.Char8.putStrLn (encode filteredJSON) ))
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
