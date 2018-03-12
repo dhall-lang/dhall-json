@@ -9,18 +9,15 @@ module Main where
 
 import Control.Exception (SomeException)
 import Options.Generic (Generic, ParseRecord, type (<?>))
-import Text.Trifecta.Delta (Delta(..))
 
 import qualified Control.Exception
 import qualified Data.Aeson
 import qualified Data.Aeson.Encode.Pretty
-import qualified Data.ByteString.Lazy.Char8
-import qualified Data.Text.Lazy.IO
+import qualified Data.ByteString.Char8
+import qualified Data.ByteString.Lazy
+import qualified Data.Text.IO
 import qualified Dhall
-import qualified Dhall.Import
 import qualified Dhall.JSON
-import qualified Dhall.Parser
-import qualified Dhall.TypeCheck
 import qualified GHC.IO.Encoding
 import qualified Options.Generic
 import qualified System.Exit
@@ -33,36 +30,21 @@ data Options = Options
     } deriving (Generic, ParseRecord)
 
 main :: IO ()
-main = handle (do
+main = handle $ do
     GHC.IO.Encoding.setLocaleEncoding GHC.IO.Encoding.utf8
     Options {..} <- Options.Generic.getRecord "Compile Dhall to JSON"
 
-    (if Options.Generic.unHelpful explain then Dhall.detailed else id) (do
-        inText <- Data.Text.Lazy.IO.getContents
+    let encode       = if   Options.Generic.unHelpful pretty
+                       then Data.Aeson.Encode.Pretty.encodePretty
+                       else Data.Aeson.encode
+        explaining   = if Options.Generic.unHelpful explain  then Dhall.detailed      else id
+        omittingNull = if Options.Generic.unHelpful omitNull then Dhall.JSON.omitNull else id
 
-        expr <- case Dhall.Parser.exprFromText (Directed "(stdin)" 0 0 0 0) inText of
-            Left  err  -> Control.Exception.throwIO err
-            Right expr -> return expr
+    stdin <- Data.Text.IO.getContents
 
-        expr' <- Dhall.Import.load expr
-        case Dhall.TypeCheck.typeOf expr' of
-            Left  err -> Control.Exception.throwIO err
-            Right _   -> return ()
+    json  <- omittingNull <$> explaining (Dhall.JSON.codeToValue "(stdin)" stdin)
 
-        json <- case Dhall.JSON.dhallToJSON expr' of
-            Left err  -> Control.Exception.throwIO err
-            Right json -> return json
-
-        let filteredJSON =
-                if Options.Generic.unHelpful omitNull
-                then Dhall.JSON.omitNull json
-                else json
-
-        let encode =
-                if   Options.Generic.unHelpful pretty
-                then Data.Aeson.Encode.Pretty.encodePretty
-                else Data.Aeson.encode
-        Data.ByteString.Lazy.Char8.putStrLn (encode filteredJSON) ))
+    Data.ByteString.Char8.putStrLn $ Data.ByteString.Lazy.toStrict $ encode json 
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
