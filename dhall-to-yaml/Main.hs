@@ -25,8 +25,9 @@ import qualified Options.Generic
 import qualified System.Exit
 import qualified System.IO
 
-newtype Options = Options
-    { explain :: Bool <?> "Explain error messages in detail"
+data Options = Options
+    { explain  :: Bool <?> "Explain error messages in detail"
+    , omitNull :: Bool <?> "Omit record fields that are null"
     } deriving (Generic, ParseRecord)
 
 main :: IO ()
@@ -49,7 +50,12 @@ main = handle (do
         json <- case Dhall.JSON.dhallToJSON expr' of
             Left err  -> Control.Exception.throwIO err
             Right json -> return json
-        Data.ByteString.putStr (Data.Yaml.encode json) ))
+
+        let filteredJSON =
+                if Options.Generic.unHelpful omitNull
+                then Dhall.JSON.omitNull json
+                else json
+        Data.ByteString.putStr (Data.Yaml.encode filteredJSON) ))
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
