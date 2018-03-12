@@ -100,17 +100,20 @@ module Dhall.JSON (
     -- * Dhall to JSON
       dhallToJSON
     , omitNull
+    , codeToValue
 
     -- * Exceptions
     , CompileError(..)
     ) where
 
-import Control.Exception (Exception)
+import Control.Exception (Exception, throwIO)
 import Data.Aeson (Value(..))
+import Data.ByteString
 import Data.Monoid ((<>))
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
+import Text.Trifecta.Delta (Delta(..))
 
 import qualified Data.Aeson
 import qualified Data.HashMap.Strict
@@ -118,6 +121,9 @@ import qualified Data.Text
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Builder
 import qualified Dhall.Core
+import qualified Dhall.Import
+import qualified Dhall.Parser
+import qualified Dhall.TypeCheck
 
 {-| This is the exception type for errors that might arise when translating
     Dhall to JSON
@@ -146,7 +152,7 @@ _ERROR = "\ESC[1;31mError\ESC[0m"
 
 instance Exception CompileError
 
-{-| Convert a Dhall expression to the equivalent Nix expression
+{-| Convert a Dhall expression to the equivalent JSON expression
 
 >>> :set -XOverloadedStrings
 >>> :set -XOverloadedLists
@@ -192,3 +198,28 @@ omitNull (Bool bool) =
     Bool bool
 omitNull Null =
     Null
+
+{-| Convert a piece of Text carrying a Dhall inscription to an equivalent JSON Value
+
+>>> :set -XOverloadedStrings
+>>> import Dhall.Core
+>>> Dhall.JSON.codeToValue "(stdin)" "{ a = 1 }"
+>>> Object (fromList [("a",Number 1.0)])
+-}
+codeToValue
+  :: Data.ByteString.ByteString -- ^ Describe the input for the sake of error location.
+  -> Data.Text.Text             -- ^ Input text.
+  -> IO Value
+codeToValue name code = do
+    expr <- case Dhall.Parser.exprFromText (Directed name 0 0 0 0) $ Data.Text.Lazy.fromStrict code of
+              Left  err  -> Control.Exception.throwIO err
+              Right expr -> return expr
+
+    expr' <- Dhall.Import.load expr
+    case Dhall.TypeCheck.typeOf expr' of
+      Left  err -> Control.Exception.throwIO err
+      Right _   -> return ()
+
+    case dhallToJSON expr' of
+      Left  err  -> Control.Exception.throwIO err
+      Right json -> return json
