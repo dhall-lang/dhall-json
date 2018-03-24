@@ -9,6 +9,9 @@ let
             pkgs.haskell.lib.justStaticExecutables
               (haskellPackagesNew.callPackage ./default.nix { });
 
+          formatting =
+            haskellPackagesNew.callPackage ./formatting.nix { };
+
           prettyprinter =
             haskellPackagesNew.callPackage ./prettyprinter.nix { };
         };
