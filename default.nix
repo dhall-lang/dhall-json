@@ -4,7 +4,7 @@
 }:
 mkDerivation {
   pname = "dhall-json";
-  version = "1.0.12";
+  version = "1.0.13";
   src = ./.;
   isLibrary = true;
   isExecutable = true;
