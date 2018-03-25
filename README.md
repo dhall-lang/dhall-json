@@ -1,5 +1,8 @@
 # `dhall-json 1.0.13`
 
+[![Build Status](https://travis-ci.org/dhall-lang/dhall-json.png)](https://travis-ci.org/dhall-lang/dhall-json.png)
+[![Hackage](https://img.shields.io/hackage/v/dhall-json.svg)](https://hackage.haskell.org/package/dhall-json)
+
 This `dhall-json` package provides a Dhall to JSON compiler and a Dhall to YAML
 compiler.  The reason this package is called `dhall-json` is that the Haskell
 `yaml` library uses the same data structure as Haskell's `aeson` library for
@@ -26,7 +29,6 @@ bar:
 
 ## Development status
 
-[![Build Status](https://travis-ci.org/Gabriel439/Haskell-Dhall-JSON-Library.png)](https://travis-ci.org/Gabriel439/Haskell-Dhall-JSON-Library)
 
 I don't expect this library to change unless:
 
