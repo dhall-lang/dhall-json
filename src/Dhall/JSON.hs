@@ -108,12 +108,10 @@ module Dhall.JSON (
 
 import Control.Exception (Exception, throwIO)
 import Data.Aeson (Value(..))
-import Data.ByteString
 import Data.Monoid ((<>))
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
-import Text.Trifecta.Delta (Delta(..))
 
 import qualified Data.Aeson
 import qualified Data.HashMap.Strict
@@ -207,13 +205,13 @@ omitNull Null =
 >>> Object (fromList [("a",Number 1.0)])
 -}
 codeToValue
-  :: Data.ByteString.ByteString -- ^ Describe the input for the sake of error location.
-  -> Data.Text.Text             -- ^ Input text.
+  :: Data.Text.Text  -- ^ Describe the input for the sake of error location.
+  -> Data.Text.Text  -- ^ Input text.
   -> IO Value
 codeToValue name code = do
-    expr <- case Dhall.Parser.exprFromText (Directed name 0 0 0 0) $ Data.Text.Lazy.fromStrict code of
-              Left  err  -> Control.Exception.throwIO err
-              Right expr -> return expr
+    expr <- case Dhall.Parser.exprFromText (Data.Text.unpack name) (Data.Text.Lazy.fromStrict code) of
+      Left  err  -> Control.Exception.throwIO err
+      Right expr -> return expr
 
     expr' <- Dhall.Import.load expr
     case Dhall.TypeCheck.typeOf expr' of
