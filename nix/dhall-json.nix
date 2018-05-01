@@ -4,7 +4,7 @@
 mkDerivation {
   pname = "dhall-json";
   version = "1.1.0";
-  src = ./.;
+  src = ./..;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
