@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
@@ -8,7 +8,7 @@
 module Main where
 
 import Control.Exception (SomeException)
-import Options.Generic (Generic, ParseRecord, type (<?>))
+import Options.Generic (Generic, ParseRecord, Wrapped, type (<?>), type (:::))
 
 import qualified Control.Exception
 import qualified Data.Aeson
@@ -23,28 +23,34 @@ import qualified Options.Generic
 import qualified System.Exit
 import qualified System.IO
 
-data Options = Options
-    { explain  :: Bool <?> "Explain error messages in detail"
-    , pretty   :: Bool <?> "Pretty print generated JSON"
-    , omitNull :: Bool <?> "Omit record fields that are null"
-    } deriving (Generic, ParseRecord)
+data Options w = Options
+    { explain  :: w ::: Bool <?> "Explain error messages in detail"
+    , pretty   :: w ::: Bool <?> "Pretty print generated JSON"
+    , omitNull :: w ::: Bool <?> "Omit record fields that are null"
+    } deriving (Generic)
+
+instance ParseRecord (Options Wrapped)
 
 main :: IO ()
 main = handle $ do
     GHC.IO.Encoding.setLocaleEncoding GHC.IO.Encoding.utf8
-    Options {..} <- Options.Generic.getRecord "Compile Dhall to JSON"
 
-    let encode       = if   Options.Generic.unHelpful pretty
-                       then Data.Aeson.Encode.Pretty.encodePretty
-                       else Data.Aeson.encode
-        explaining   = if Options.Generic.unHelpful explain  then Dhall.detailed      else id
-        omittingNull = if Options.Generic.unHelpful omitNull then Dhall.JSON.omitNull else id
+    Options {..} <- Options.Generic.unwrapRecord "Compile Dhall to JSON"
+
+    let encode =
+            if pretty
+            then Data.Aeson.Encode.Pretty.encodePretty
+            else Data.Aeson.encode
+
+    let explaining = if explain then Dhall.detailed else id
+
+    let omittingNull = if omitNull then Dhall.JSON.omitNull else id
 
     stdin <- Data.Text.IO.getContents
 
-    json  <- omittingNull <$> explaining (Dhall.JSON.codeToValue "(stdin)" stdin)
+    json <- omittingNull <$> explaining (Dhall.JSON.codeToValue "(stdin)" stdin)
 
-    Data.ByteString.Char8.putStrLn $ Data.ByteString.Lazy.toStrict $ encode json 
+    Data.ByteString.Char8.putStrLn $ Data.ByteString.Lazy.toStrict $ encode json
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
