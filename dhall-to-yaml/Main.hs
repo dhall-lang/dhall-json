@@ -29,20 +29,21 @@ data Options w = Options
 instance ParseRecord (Options Wrapped)
 
 main :: IO ()
-main = handle $ do
+main = do
     GHC.IO.Encoding.setLocaleEncoding GHC.IO.Encoding.utf8
 
     Options{..} <- Options.Generic.unwrapRecord "Compile Dhall to JSON"
 
-    let explaining = if explain then Dhall.detailed else id
+    handle $ do
+        let explaining = if explain then Dhall.detailed else id
 
-    let omittingNull = if omitNull then Dhall.JSON.omitNull else id
+        let omittingNull = if omitNull then Dhall.JSON.omitNull else id
 
-    stdin <- Data.Text.IO.getContents
+        stdin <- Data.Text.IO.getContents
 
-    json <- omittingNull <$> explaining (Dhall.JSON.codeToValue "(stdin)" stdin)
+        json <- omittingNull <$> explaining (Dhall.JSON.codeToValue "(stdin)" stdin)
 
-    Data.ByteString.putStr $ Data.Yaml.encode json 
+        Data.ByteString.putStr $ Data.Yaml.encode json 
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
