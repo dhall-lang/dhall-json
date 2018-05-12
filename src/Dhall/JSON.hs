@@ -1,5 +1,7 @@
+{-# LANGUAGE ApplicativeDo      #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
 
 {-| This library only exports a single `dhallToJSON` function for translating a
     Dhall syntax tree to a JSON syntax tree (i.e. a `Value`) for the @aeson@
@@ -100,13 +102,16 @@ module Dhall.JSON (
     -- * Dhall to JSON
       dhallToJSON
     , omitNull
+    , Conversion(..)
+    , convertToHomogeneousMaps
+    , parseConversion
     , codeToValue
 
     -- * Exceptions
     , CompileError(..)
     ) where
 
-import Control.Applicative (empty)
+import Control.Applicative (empty, (<|>))
 import Control.Monad (guard)
 import Control.Exception (Exception, throwIO)
 import Data.Aeson (Value(..))
@@ -115,6 +120,7 @@ import Data.Text.Lazy (Text)
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
+import Options.Applicative (Parser)
 
 import qualified Data.Aeson
 import qualified Data.Foldable
@@ -127,6 +133,7 @@ import qualified Dhall.Core
 import qualified Dhall.Import
 import qualified Dhall.Parser
 import qualified Dhall.TypeCheck
+import qualified Options.Applicative
 
 {-| This is the exception type for errors that might arise when translating
     Dhall to JSON
@@ -202,8 +209,26 @@ omitNull (Bool bool) =
 omitNull Null =
     Null
 
-convertToHomogeneousMaps :: Text -> Text -> Expr s X -> Expr s X
-convertToHomogeneousMaps keyField valueField e0 = loop (Dhall.Core.normalize e0)
+{-| Specify whether or not to convert association lists of type
+    @List { mapKey: Text, mapValue : v }@ to records
+-}
+data Conversion
+    = NoConversion
+    | Conversion { mapKey :: Text, mapValue :: Text }
+
+{-| Convert association lists to homogeneous maps
+
+    This converts an association list of the form:
+
+    > [ { mapKey = k0, mapValue = v0 }, { mapKey = k1, mapValue = v1 } ]
+
+    ... to a record of the form:
+
+    > { k0 = v0, k1 = v1 }
+-}
+convertToHomogeneousMaps :: Conversion -> Expr s X -> Expr s X
+convertToHomogeneousMaps NoConversion e0 = e0
+convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
   where
     loop e = case e of
         Dhall.Core.Const a ->
@@ -365,8 +390,8 @@ convertToHomogeneousMaps keyField valueField e0 = loop (Dhall.Core.normalize e0)
             toKeyValue (Dhall.Core.RecordLit m) = do
                 guard (Data.HashMap.Strict.InsOrd.size m == 2)
 
-                key   <- Data.HashMap.Strict.InsOrd.lookup keyField   m
-                value <- Data.HashMap.Strict.InsOrd.lookup valueField m
+                key   <- Data.HashMap.Strict.InsOrd.lookup mapKey   m
+                value <- Data.HashMap.Strict.InsOrd.lookup mapValue m
 
                 keyText <- case key of
                     Dhall.Core.TextLit (Dhall.Core.Chunks [] keyText) ->
@@ -385,8 +410,8 @@ convertToHomogeneousMaps keyField valueField e0 = loop (Dhall.Core.normalize e0)
                         case a of
                             Just (Dhall.Core.Record m) -> do
                                 guard (Data.HashMap.Strict.InsOrd.size m == 2)
-                                guard (Data.HashMap.Strict.InsOrd.member keyField   m)
-                                guard (Data.HashMap.Strict.InsOrd.member valueField m)
+                                guard (Data.HashMap.Strict.InsOrd.member mapKey   m)
+                                guard (Data.HashMap.Strict.InsOrd.member mapValue m)
                                 return (Dhall.Core.RecordLit Data.HashMap.Strict.InsOrd.empty)
                             _ -> do
                                 empty
@@ -513,6 +538,40 @@ convertToHomogeneousMaps keyField valueField e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.Embed a ->
             Dhall.Core.Embed a
 
+parseConversion :: Parser Conversion
+parseConversion =
+        conversion
+    <|> noConversion
+  where
+    conversion = do
+        mapKey   <- parseKeyField
+        mapValue <- parseValueField
+        return (Conversion {..})
+      where
+        parseKeyField =
+            Options.Applicative.strOption
+                (   Options.Applicative.long "key"
+                <>  Options.Applicative.help "Reserved key field name for association lists"
+                <>  Options.Applicative.value "mapKey"
+                <>  Options.Applicative.showDefaultWith Data.Text.Lazy.unpack
+                )
+
+        parseValueField =
+            Options.Applicative.strOption
+                (   Options.Applicative.long "value"
+                <>  Options.Applicative.help "Reserved value field name for association lists"
+                <>  Options.Applicative.value "mapValue"
+                <>  Options.Applicative.showDefaultWith Data.Text.Lazy.unpack
+                )
+
+    noConversion =
+        Options.Applicative.flag'
+            NoConversion
+            (   Options.Applicative.long "noMaps"
+            <>  Options.Applicative.help "Disable conversion of association lists to homogeneous maps"
+            )
+
+
 {-| Convert a piece of Text carrying a Dhall inscription to an equivalent JSON Value
 
 >>> :set -XOverloadedStrings
@@ -521,10 +580,11 @@ convertToHomogeneousMaps keyField valueField e0 = loop (Dhall.Core.normalize e0)
 >>> Object (fromList [("a",Number 1.0)])
 -}
 codeToValue
-  :: Data.Text.Text  -- ^ Describe the input for the sake of error location.
+  :: Conversion
+  -> Data.Text.Text  -- ^ Describe the input for the sake of error location.
   -> Data.Text.Text  -- ^ Input text.
   -> IO Value
-codeToValue name code = do
+codeToValue conversion name code = do
     parsedExpression <- case Dhall.Parser.exprFromText (Data.Text.unpack name) (Data.Text.Lazy.fromStrict code) of
       Left  err              -> Control.Exception.throwIO err
       Right parsedExpression -> return parsedExpression
@@ -536,7 +596,7 @@ codeToValue name code = do
       Right _   -> return ()
 
     let convertedExpression =
-            convertToHomogeneousMaps "mapKey" "mapValue" resolvedExpression
+            convertToHomogeneousMaps conversion resolvedExpression
 
     case dhallToJSON convertedExpression of
       Left  err  -> Control.Exception.throwIO err
