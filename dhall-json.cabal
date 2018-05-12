@@ -41,13 +41,13 @@ Executable dhall-to-json
     Hs-Source-Dirs: dhall-to-json
     Main-Is: Main.hs
     Build-Depends:
-        base                                  ,
-        aeson                                 ,
-        aeson-pretty                    < 0.9 ,
-        bytestring                      < 0.11,
-        dhall                                 ,
-        dhall-json                            ,
-        optparse-generic >= 1.1.1    && < 1.4 ,
+        base                       ,
+        aeson                      ,
+        aeson-pretty         < 0.9 ,
+        bytestring           < 0.11,
+        dhall                      ,
+        dhall-json                 ,
+        optparse-applicative < 0.15,
         text
     GHC-Options: -Wall
 
@@ -59,7 +59,7 @@ Executable dhall-to-yaml
         bytestring                      < 0.11,
         dhall                                 ,
         dhall-json                            ,
-        optparse-generic >= 1.1.1    && < 1.4 ,
+        optparse-applicative            < 0.15,
         yaml             >= 0.5.0    && < 0.9 ,
         text
     GHC-Options: -Wall
