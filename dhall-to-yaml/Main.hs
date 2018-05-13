@@ -6,6 +6,7 @@ module Main where
 
 import Control.Exception (SomeException)
 import Data.Monoid ((<>))
+import Dhall.JSON (Conversion)
 import Options.Applicative (Parser, ParserInfo)
 
 import qualified Control.Exception
@@ -20,14 +21,16 @@ import qualified System.Exit
 import qualified System.IO
 
 data Options = Options
-    { explain  :: Bool
-    , omitNull :: Bool
+    { explain    :: Bool
+    , omitNull   :: Bool
+    , conversion :: Conversion
     }
 
 parseOptions :: Parser Options
 parseOptions = Options.Applicative.helper <*> do
-    explain  <- parseExplain
-    omitNull <- parseOmitNull
+    explain    <- parseExplain
+    omitNull   <- parseOmitNull
+    conversion <- Dhall.JSON.parseConversion
     return (Options {..})
   where
     parseExplain =
@@ -63,7 +66,7 @@ main = do
 
         stdin <- Data.Text.IO.getContents
 
-        json <- omittingNull <$> explaining (Dhall.JSON.codeToValue "(stdin)" stdin)
+        json <- omittingNull <$> explaining (Dhall.JSON.codeToValue conversion "(stdin)" stdin)
 
         Data.ByteString.putStr $ Data.Yaml.encode json 
 

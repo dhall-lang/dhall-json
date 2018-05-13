@@ -1,5 +1,6 @@
 { mkDerivation, aeson, aeson-pretty, base, bytestring, dhall
-, optparse-applicative, stdenv, text, unordered-containers, yaml
+, insert-ordered-containers, optparse-applicative, stdenv, text
+, unordered-containers, yaml
 }:
 mkDerivation {
   pname = "dhall-json";
@@ -8,7 +9,8 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    aeson base dhall text unordered-containers
+    aeson base dhall insert-ordered-containers optparse-applicative
+    text unordered-containers
   ];
   executableHaskellDepends = [
     aeson aeson-pretty base bytestring dhall optparse-applicative text
