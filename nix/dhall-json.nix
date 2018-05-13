@@ -1,5 +1,5 @@
 { mkDerivation, aeson, aeson-pretty, base, bytestring, dhall
-, optparse-generic, stdenv, text, unordered-containers, yaml
+, optparse-applicative, stdenv, text, unordered-containers, yaml
 }:
 mkDerivation {
   pname = "dhall-json";
@@ -11,7 +11,8 @@ mkDerivation {
     aeson base dhall text unordered-containers
   ];
   executableHaskellDepends = [
-    aeson aeson-pretty base bytestring dhall optparse-generic text yaml
+    aeson aeson-pretty base bytestring dhall optparse-applicative text
+    yaml
   ];
   description = "Compile Dhall to JSON or YAML";
   license = stdenv.lib.licenses.bsd3;
