@@ -31,7 +31,7 @@ Library
     Build-Depends:
         base                      >= 4.8.0.0  && < 5   ,
         aeson                     >= 1.0.0.0  && < 1.4 ,
-        dhall                     >= 1.13.0   && < 1.14,
+        dhall                     >= 1.14.0   && < 1.15,
         insert-ordered-containers                < 1.14,
         optparse-applicative      >= 0.14.0.0 && < 0.15,
         text                      >= 0.11.1.0 && < 1.3 ,
