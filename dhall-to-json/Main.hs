@@ -70,9 +70,14 @@ main = do
     Options {..} <- Options.Applicative.execParser parserInfo
 
     handle $ do
+        let config = Data.Aeson.Encode.Pretty.Config
+                       { Data.Aeson.Encode.Pretty.confIndent = Data.Aeson.Encode.Pretty.Spaces 2
+                       , Data.Aeson.Encode.Pretty.confCompare = compare
+                       , Data.Aeson.Encode.Pretty.confNumFormat = Data.Aeson.Encode.Pretty.Generic
+                       , Data.Aeson.Encode.Pretty.confTrailingNewline = False }
         let encode =
                 if pretty
-                then Data.Aeson.Encode.Pretty.encodePretty
+                then Data.Aeson.Encode.Pretty.encodePretty' config
                 else Data.Aeson.encode
 
         let explaining = if explain then Dhall.detailed else id
