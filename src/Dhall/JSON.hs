@@ -1,5 +1,6 @@
 {-# LANGUAGE ApplicativeDo      #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedLists    #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE RecordWildCards    #-}
 
@@ -91,6 +92,65 @@
 > $ dhall-to-json <<< "./config"
 > [{"age":47,"name":"John"},{"location":"North Pole"},{"location":"Sahara Desert"},{"age":35,"name":"Alice"}]
 
+    You can preserve the name of the alternative if you wrap the value in a
+    record with three fields:
+
+    * @contents@: The union literal that you want to preserve the tag of
+
+    * @field@: the name of the field that will store the name of the
+      alternative
+
+    * @nesting@: A value of type @\< Inline : {} | Nested : Text \>@.
+
+    If @nesting@ is set to @Inline@ and the union literal stored in @contents@
+    contains a record then the name of the alternative is stored inline within
+    the same record.  For example, this code:
+
+>     let Example = < Left : { foo : Natural } | Right : { bar : Bool } >
+> 
+> in  let example = constructors Example
+> 
+> in  let Nesting = < Inline : {} | Nested : Text >
+> 
+> in  let nesting = constructors Nesting
+> 
+> in  { field    = "name"
+>     , nesting  = nesting.Inline {=}
+>     , contents = example.Left { foo = 2 }
+>     }
+
+    ... produces this JSON:
+
+> {
+>   "foo": 2,
+>   "name": "Left"
+> }
+
+    If @nesting@ is set to @Nested nestedField@ then the union is store
+    underneath a field named @nestedField@.  For example, this code:
+
+>     let Example = < Left : { foo : Natural } | Right : { bar : Bool } >
+> 
+> in  let example = constructors Example
+> 
+> in  let Nesting = < Inline : {} | Nested : Text >
+> 
+> in  let nesting = constructors Nesting
+> 
+> in  { field    = "name"
+>     , nesting  = nesting.Nested "value"
+>     , contents = example.Left { foo = 2 }
+>     }
+
+    ... produces this JSON:
+
+> {
+>   "name": "Left",
+>   "value": {
+>     "foo": 2
+>   }
+> }
+
     Also, all Dhall expressions are normalized before translation to JSON:
 
 > $ dhall-to-json <<< "True == False"
@@ -115,6 +175,7 @@ import Control.Applicative (empty, (<|>))
 import Control.Monad (guard)
 import Control.Exception (Exception, throwIO)
 import Data.Aeson (Value(..))
+import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
 import Data.Monoid ((<>))
 import Data.Text.Lazy (Text)
 import Data.Typeable (Typeable)
@@ -126,6 +187,8 @@ import qualified Data.Aeson
 import qualified Data.Foldable
 import qualified Data.HashMap.Strict
 import qualified Data.HashMap.Strict.InsOrd
+import qualified Data.List
+import qualified Data.Ord
 import qualified Data.Text
 import qualified Data.Text.Lazy
 import qualified Data.Text.Lazy.Builder
@@ -188,11 +251,90 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.OptionalLit _ a -> do
             a' <- traverse loop a
             return (Data.Aeson.toJSON a')
-        Dhall.Core.RecordLit a -> do
-            a' <- traverse loop a
-            return (Data.Aeson.toJSON a')
+        Dhall.Core.RecordLit a ->
+            case toOrderedList a of
+                [   (   "contents"
+                    ,   Dhall.Core.UnionLit alternativeName contents _
+                    )
+                 ,  (   "field"
+                    ,   Dhall.Core.TextLit
+                            (Dhall.Core.Chunks [] fieldBuilder)
+                    )
+                 ,  (   "nesting"
+                    ,   Dhall.Core.UnionLit
+                            "Nested"
+                            (Dhall.Core.TextLit
+                                (Dhall.Core.Chunks [] nestedFieldBuilder)
+                            )
+                            [ ("Inline", Dhall.Core.Record []) ]
+                    )
+                 ] -> do
+                    contents' <- loop contents
+
+                    let field =
+                            Data.Text.Lazy.Builder.toLazyText fieldBuilder
+
+                    let nestedField =
+                            Data.Text.Lazy.Builder.toLazyText nestedFieldBuilder
+
+                    let taggedValue =
+                            Data.HashMap.Strict.InsOrd.fromList
+                                [   (   field
+                                    ,   Data.Aeson.toJSON alternativeName
+                                    )
+                                ,   (   nestedField
+                                    ,   contents'
+                                    )
+                                ]
+
+                    return (Data.Aeson.toJSON taggedValue)
+
+                [   (   "contents"
+                    ,   Dhall.Core.UnionLit
+                            alternativeName
+                            (Dhall.Core.RecordLit contents)
+                            _
+                    )
+                 ,  (   "field"
+                    ,   Dhall.Core.TextLit
+                            (Dhall.Core.Chunks [] fieldBuilder)
+                    )
+                 ,  (   "nesting"
+                    ,   Dhall.Core.UnionLit
+                            "Inline"
+                            (Dhall.Core.RecordLit [])
+                            [ ("Nested", Dhall.Core.Text) ]
+                    )
+                 ] -> do
+                    let field =
+                            Data.Text.Lazy.Builder.toLazyText fieldBuilder
+
+                    let alternativeNameBuilder =
+                            Data.Text.Lazy.Builder.fromLazyText alternativeName
+
+                    let contents' =
+                            Data.HashMap.Strict.InsOrd.insert
+                                field
+                                (Dhall.Core.TextLit
+                                    (Dhall.Core.Chunks
+                                        []
+                                        alternativeNameBuilder
+                                    )
+                                )
+                                contents
+
+                    loop (Dhall.Core.RecordLit contents')
+                _ -> do
+                    a' <- traverse loop a
+                    return (Data.Aeson.toJSON a')
         Dhall.Core.UnionLit _ b _ -> loop b
         _ -> Left (Unsupported e)
+
+toOrderedList :: Ord k => InsOrdHashMap k v -> [(k, v)]
+toOrderedList =
+        Data.List.sortBy (Data.Ord.comparing fst)
+    .   Data.HashMap.Strict.toList
+    .   Data.HashMap.Strict.InsOrd.toHashMap
 
 -- | Omit record fields that are @null@
 omitNull :: Value -> Value
