@@ -177,7 +177,7 @@ import Control.Exception (Exception, throwIO)
 import Data.Aeson (Value(..))
 import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
 import Data.Monoid ((<>))
-import Data.Text.Lazy (Text)
+import Data.Text (Text)
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
@@ -190,8 +190,6 @@ import qualified Data.HashMap.Strict.InsOrd
 import qualified Data.List
 import qualified Data.Ord
 import qualified Data.Text
-import qualified Data.Text.Lazy
-import qualified Data.Text.Lazy.Builder
 import qualified Dhall.Core
 import qualified Dhall.Import
 import qualified Dhall.Parser
@@ -218,7 +216,7 @@ instance Show CompileError where
             \                                                                               \n\
             \↳ " <> txt <> "                                                                "
       where
-        txt = Data.Text.Lazy.toStrict (Dhall.Core.pretty e)
+        txt = Dhall.Core.pretty e
 
 _ERROR :: Data.Text.Text
 _ERROR = "\ESC[1;31mError\ESC[0m"
@@ -244,7 +242,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.IntegerLit a -> return (Data.Aeson.toJSON a)
         Dhall.Core.DoubleLit a -> return (Data.Aeson.toJSON a)
         Dhall.Core.TextLit (Dhall.Core.Chunks [] a) -> do
-            return (Data.Aeson.toJSON (Data.Text.Lazy.Builder.toLazyText a))
+            return (Data.Aeson.toJSON a)
         Dhall.Core.ListLit _ a -> do
             a' <- traverse loop a
             return (Data.Aeson.toJSON a')
@@ -258,24 +256,18 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                     )
                  ,  (   "field"
                     ,   Dhall.Core.TextLit
-                            (Dhall.Core.Chunks [] fieldBuilder)
+                            (Dhall.Core.Chunks [] field)
                     )
                  ,  (   "nesting"
                     ,   Dhall.Core.UnionLit
                             "Nested"
                             (Dhall.Core.TextLit
-                                (Dhall.Core.Chunks [] nestedFieldBuilder)
+                                (Dhall.Core.Chunks [] nestedField)
                             )
                             [ ("Inline", Dhall.Core.Record []) ]
                     )
                  ] -> do
                     contents' <- loop contents
-
-                    let field =
-                            Data.Text.Lazy.Builder.toLazyText fieldBuilder
-
-                    let nestedField =
-                            Data.Text.Lazy.Builder.toLazyText nestedFieldBuilder
 
                     let taggedValue =
                             Data.HashMap.Strict.InsOrd.fromList
@@ -297,7 +289,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                     )
                  ,  (   "field"
                     ,   Dhall.Core.TextLit
-                            (Dhall.Core.Chunks [] fieldBuilder)
+                            (Dhall.Core.Chunks [] field)
                     )
                  ,  (   "nesting"
                     ,   Dhall.Core.UnionLit
@@ -306,19 +298,13 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                             [ ("Nested", Dhall.Core.Text) ]
                     )
                  ] -> do
-                    let field =
-                            Data.Text.Lazy.Builder.toLazyText fieldBuilder
-
-                    let alternativeNameBuilder =
-                            Data.Text.Lazy.Builder.fromLazyText alternativeName
-
                     let contents' =
                             Data.HashMap.Strict.InsOrd.insert
                                 field
                                 (Dhall.Core.TextLit
                                     (Dhall.Core.Chunks
                                         []
-                                        alternativeNameBuilder
+                                        alternativeName
                                     )
                                 )
                                 contents
@@ -495,6 +481,9 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.IntegerShow ->
             Dhall.Core.IntegerShow
 
+        Dhall.Core.IntegerToDouble ->
+            Dhall.Core.IntegerToDouble
+
         Dhall.Core.Double ->
             Dhall.Core.Double
 
@@ -542,7 +531,7 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
                     _ ->
                         empty
 
-                return (Data.Text.Lazy.Builder.toLazyText keyText, value)
+                return (keyText, value)
             toKeyValue _ = do
                 empty
 
@@ -672,6 +661,12 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
           where
             a' = loop a
 
+        Dhall.Core.ImportAlt a b ->
+            Dhall.Core.ImportAlt a' b'
+          where
+            a' = loop a
+            b' = loop b
+
         Dhall.Core.Note a b ->
             Dhall.Core.Note a b'
           where
@@ -695,7 +690,7 @@ parseConversion =
                 (   Options.Applicative.long "key"
                 <>  Options.Applicative.help "Reserved key field name for association lists"
                 <>  Options.Applicative.value "mapKey"
-                <>  Options.Applicative.showDefaultWith Data.Text.Lazy.unpack
+                <>  Options.Applicative.showDefaultWith Data.Text.unpack
                 )
 
         parseValueField =
@@ -703,7 +698,7 @@ parseConversion =
                 (   Options.Applicative.long "value"
                 <>  Options.Applicative.help "Reserved value field name for association lists"
                 <>  Options.Applicative.value "mapValue"
-                <>  Options.Applicative.showDefaultWith Data.Text.Lazy.unpack
+                <>  Options.Applicative.showDefaultWith Data.Text.unpack
                 )
 
     noConversion =
@@ -723,11 +718,11 @@ parseConversion =
 -}
 codeToValue
   :: Conversion
-  -> Data.Text.Text  -- ^ Describe the input for the sake of error location.
-  -> Data.Text.Text  -- ^ Input text.
+  -> Text  -- ^ Describe the input for the sake of error location.
+  -> Text  -- ^ Input text.
   -> IO Value
 codeToValue conversion name code = do
-    parsedExpression <- case Dhall.Parser.exprFromText (Data.Text.unpack name) (Data.Text.Lazy.fromStrict code) of
+    parsedExpression <- case Dhall.Parser.exprFromText (Data.Text.unpack name) code of
       Left  err              -> Control.Exception.throwIO err
       Right parsedExpression -> return parsedExpression
 
