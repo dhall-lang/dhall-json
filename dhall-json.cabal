@@ -62,6 +62,6 @@ Executable dhall-to-yaml
         dhall                                 ,
         dhall-json                            ,
         optparse-applicative                  ,
-        yaml             >= 0.5.0    && < 0.9 ,
+        yaml             >= 0.5.0    && < 0.10,
         text
     GHC-Options: -Wall
