@@ -1,1 +1,1 @@
-(import ./release.nix).dhall-json.env
+(import ./default.nix).shell
