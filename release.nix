@@ -1,5 +1,8 @@
 let
-  default = import ./default.nix;
+  default = (import ./default.nix);
 
 in
-  { inherit (default) dhall-json; }
+  { dhall-json = default.all;
+
+    inherit (default) tarball;
+  }
