@@ -1,0 +1,90 @@
+1.2.2
+
+* Increase upper bound on `dhall` dependency
+* Increase upper bound on `yaml` dependency
+
+1.2.1
+
+* Add support for preserving sum type tags
+* Sort keys when pretty-printing JSON
+* Increase upper bound on `dhall` dependency
+
+1.2.0
+
+* BREAKING CHANGE: Add support for converting association lists to JSON records
+    * This changes the behavior for records with two keys named `mapKey` and
+      `mapValue`
+* Fix `--help` to not print `ExitSuccess`
+* Fix lower bound on `dhall` dependency
+* Remove `optparse-generic` dependency
+* Increase upper bound on `dhall` dependency
+
+1.1.0
+
+* BREAKING CHANGE: Build against `dhall-1.13.0`
+    * This requires a breaking change to the type of `codeToValue`
+
+1.0.13
+
+* Add `--omitNull` flag to omit null-valued fields from generated JSON records
+* Add `codeToValue`
+* Increase upper bound on `dhall` dependency
+
+1.0.12
+
+* Increase upper bound on `aeson` dependency
+* Increase upper bound on `dhall` dependency
+
+1.0.11
+
+* Increase upper bound on `dhall` dependency
+* Increase upper bound on `optparse-generic` dependency
+
+1.0.10
+
+* Increase upper bound on `dhall` dependency
+
+1.0.9
+
+* Add trailing newline to JSON output
+* Remove dependency on `QuasiQuotes`
+
+1.0.8
+
+* Increase upper bound on `dhall` dependency
+
+1.0.7
+
+* Add `--pretty` flag
+* Increase upper bound on `dhall` dependency
+
+1.0.6
+
+* Increase upper bound on `aeson` dependency
+* Increase upper bound on `dhall` dependency
+
+1.0.5
+
+* Increase upper bound on `optparse-generic` dependency
+* Increase upper bound on `trifecta` dependency
+
+1.0.4
+
+* Increase upper bound on `dhall` dependency
+
+1.0.3
+
+* Increase upper bound on `dhall` dependency
+
+1.0.2
+
+* Add support for translating unions by stripping the tag
+* Increase upper bound on `dhall` dependency
+
+1.0.1
+
+* Increase upper bound on `dhall` dependency
+
+1.0.0
+
+* Initial release
