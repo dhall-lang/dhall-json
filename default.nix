@@ -53,11 +53,11 @@ let
   };
 
   nixpkgs = fetchNixpkgs {
-    rev = "2c07921cff84dfb0b9e0f6c2d10ee2bfee6a85ac";
+    rev = "1d4de0d552ae9aa66a5b8dee5fb0650a4372d148";
 
-    sha256 = "09cfdbrzy3wfpqd3nkahv0jqfynpxy4kpcxq0gab0pq9a8bia6sg";
+    sha256 = "09qx58dp1kbj7cpzp8ahbqfbbab1frb12sh1qng87rybcaz0dz01";
 
-    outputSha256 = "1sxh54zxqy54vrak203qci4128z9mxnzfr5bb5pl6xdrdkcdpqrn";
+    outputSha256 = "0xpqc1fhkvvv5dv1zmas2j1q27mi7j7dgyjcdh82mlgl1q63i660";
   };
 
   pkgs = import nixpkgs { config = {}; overlays = [ overlayShared ]; };
