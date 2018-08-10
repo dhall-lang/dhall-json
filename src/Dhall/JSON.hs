@@ -512,7 +512,7 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
 
         Dhall.Core.ListLit a b ->
             case transform of
-                Just c  -> c
+                Just c  -> loop c
                 Nothing -> Dhall.Core.ListLit a' b'
           where
             elements = Data.Foldable.toList b

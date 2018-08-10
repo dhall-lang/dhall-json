@@ -22,7 +22,10 @@ Description:
     The "Dhall.JSON" module also contains instructions for how to use this
     package
 Category: Compiler
-Extra-Source-Files: CHANGELOG.md
+Extra-Source-Files:
+    CHANGELOG.md
+    tasty/data/*.dhall
+    tasty/data/*.json
 Source-Repository head
     Type: git
     Location: https://github.com/dhall-lang/dhall-json
@@ -58,11 +61,24 @@ Executable dhall-to-yaml
     Hs-Source-Dirs: dhall-to-yaml
     Main-Is: Main.hs
     Build-Depends:
-        base                                  ,
-        bytestring                      < 0.11,
-        dhall                                 ,
-        dhall-json                            ,
-        optparse-applicative                  ,
-        yaml             >= 0.5.0    && < 0.10,
+        base                                   ,
+        bytestring                       < 0.11,
+        dhall                                  ,
+        dhall-json                             ,
+        optparse-applicative                   ,
+        yaml                 >= 0.5.0 && < 0.10,
         text
     GHC-Options: -Wall
+
+Test-Suite tasty
+    Type: exitcode-stdio-1.0
+    Hs-Source-Dirs: tasty
+    Main-Is: Main.hs
+    Build-Depends:
+        base,
+        aeson             ,
+        dhall             ,
+        dhall-json        ,
+        tasty       <  1.2,
+        text              ,
+        tasty-hunit >= 0.2
