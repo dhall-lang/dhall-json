@@ -38,6 +38,8 @@ let
                 prettyprinter =
                   pkgsNew.haskell.lib.dontCheck
                     haskellPackagesOld.prettyprinter;
+
+                yaml = pkgsNew.haskell.lib.disableCabalFlag haskellPackagesOld.yaml "system-libyaml";
               };
 
           in
