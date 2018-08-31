@@ -1,3 +1,9 @@
+1.2.3
+
+* Correctly handle nested association lists
+* Increase upper bound on `dhall` dependency
+* Increase upper bound on `yaml` dependency
+
 1.2.2
 
 * Increase upper bound on `dhall` dependency
