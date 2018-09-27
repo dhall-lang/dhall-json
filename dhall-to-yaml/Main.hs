@@ -12,6 +12,7 @@ import Options.Applicative (Parser, ParserInfo)
 import qualified Control.Exception
 import qualified Data.ByteString
 import qualified Data.Text.IO
+import qualified Data.Vector
 import qualified Data.Yaml
 import qualified Dhall
 import qualified Dhall.JSON
@@ -23,6 +24,7 @@ import qualified System.IO
 data Options = Options
     { explain    :: Bool
     , omitNull   :: Bool
+    , documents  :: Bool
     , conversion :: Conversion
     }
 
@@ -30,6 +32,7 @@ parseOptions :: Parser Options
 parseOptions = Options.Applicative.helper <*> do
     explain    <- parseExplain
     omitNull   <- parseOmitNull
+    documents  <- parseDocuments
     conversion <- Dhall.JSON.parseConversion
     return (Options {..})
   where
@@ -43,6 +46,12 @@ parseOptions = Options.Applicative.helper <*> do
         Options.Applicative.switch
             (   Options.Applicative.long "omitNull"
             <>  Options.Applicative.help "Omit record fields that are null"
+            )
+
+    parseDocuments =
+        Options.Applicative.switch
+            (   Options.Applicative.long "documents"
+            <>  Options.Applicative.help "If given a Dhall list, output a document for every element"
             )
 
 parserInfo :: ParserInfo Options
@@ -68,7 +77,14 @@ main = do
 
         json <- omittingNull <$> explaining (Dhall.JSON.codeToValue conversion "(stdin)" stdin)
 
-        Data.ByteString.putStr $ Data.Yaml.encode json 
+        let yaml = case (documents, json) of
+              (True, Data.Yaml.Array elems)
+                -> Data.ByteString.intercalate "\n---\n"
+                   $ fmap Data.Yaml.encode
+                   $ Data.Vector.toList elems
+              _ -> Data.Yaml.encode json
+
+        Data.ByteString.putStr yaml
 
 handle :: IO a -> IO a
 handle = Control.Exception.handle handler
