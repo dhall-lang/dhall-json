@@ -24,7 +24,7 @@ import qualified System.IO
 data Options = Options
     { explain    :: Bool
     , omitNull   :: Bool
-    , manyDocs   :: Bool
+    , documents  :: Bool
     , conversion :: Conversion
     }
 
@@ -32,7 +32,7 @@ parseOptions :: Parser Options
 parseOptions = Options.Applicative.helper <*> do
     explain    <- parseExplain
     omitNull   <- parseOmitNull
-    manyDocs   <- parseManyDocs
+    documents  <- parseDocuments
     conversion <- Dhall.JSON.parseConversion
     return (Options {..})
   where
@@ -48,9 +48,9 @@ parseOptions = Options.Applicative.helper <*> do
             <>  Options.Applicative.help "Omit record fields that are null"
             )
 
-    parseManyDocs =
+    parseDocuments =
         Options.Applicative.switch
-            (   Options.Applicative.long "manyDocs"
+            (   Options.Applicative.long "documents"
             <>  Options.Applicative.help "If given a Dhall list, output a document for every element"
             )
 
@@ -77,7 +77,7 @@ main = do
 
         json <- omittingNull <$> explaining (Dhall.JSON.codeToValue conversion "(stdin)" stdin)
 
-        let yaml = case (manyDocs, json) of
+        let yaml = case (documents, json) of
               (True, Data.Yaml.Array elems)
                 -> Data.ByteString.intercalate "\n---\n"
                    $ fmap Data.Yaml.encode
