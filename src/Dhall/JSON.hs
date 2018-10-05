@@ -249,6 +249,11 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.OptionalLit _ a -> do
             a' <- traverse loop a
             return (Data.Aeson.toJSON a')
+        Dhall.Core.Some a -> do
+            a' <- loop a
+            return (Data.Aeson.toJSON a')
+        Dhall.Core.App Dhall.Core.None _ -> do
+            return Data.Aeson.Null
         Dhall.Core.RecordLit a ->
             case toOrderedList a of
                 [   (   "contents"
@@ -593,6 +598,14 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
           where
             a' =      loop a
             b' = fmap loop b
+
+        Dhall.Core.Some a ->
+            Dhall.Core.Some a'
+          where
+            a' = loop a
+
+        Dhall.Core.None ->
+            Dhall.Core.None
 
         Dhall.Core.OptionalFold ->
             Dhall.Core.OptionalFold
