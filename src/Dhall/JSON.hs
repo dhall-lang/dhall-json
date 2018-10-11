@@ -175,8 +175,8 @@ import Control.Applicative (empty, (<|>))
 import Control.Monad (guard)
 import Control.Exception (Exception, throwIO)
 import Data.Aeson (Value(..))
-import Data.HashMap.Strict.InsOrd (InsOrdHashMap)
-import Data.Monoid ((<>))
+import Data.Foldable (length)
+import Data.Monoid ((<>), mempty)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
@@ -186,12 +186,12 @@ import Options.Applicative (Parser)
 import qualified Data.Aeson
 import qualified Data.Foldable
 import qualified Data.HashMap.Strict
-import qualified Data.HashMap.Strict.InsOrd
 import qualified Data.List
 import qualified Data.Ord
 import qualified Data.Text
 import qualified Dhall.Core
 import qualified Dhall.Import
+import qualified Dhall.Map
 import qualified Dhall.Parser
 import qualified Dhall.TypeCheck
 import qualified Options.Applicative
@@ -275,7 +275,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                     contents' <- loop contents
 
                     let taggedValue =
-                            Data.HashMap.Strict.InsOrd.fromList
+                            Dhall.Map.fromList
                                 [   (   field
                                     ,   Data.Aeson.toJSON alternativeName
                                     )
@@ -284,7 +284,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                                     )
                                 ]
 
-                    return (Data.Aeson.toJSON taggedValue)
+                    return (Data.Aeson.toJSON ( Dhall.Map.toMap taggedValue ))
 
                 [   (   "contents"
                     ,   Dhall.Core.UnionLit
@@ -304,7 +304,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                     )
                  ] -> do
                     let contents' =
-                            Data.HashMap.Strict.InsOrd.insert
+                            Dhall.Map.insert
                                 field
                                 (Dhall.Core.TextLit
                                     (Dhall.Core.Chunks
@@ -317,15 +317,14 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                     loop (Dhall.Core.RecordLit contents')
                 _ -> do
                     a' <- traverse loop a
-                    return (Data.Aeson.toJSON a')
+                    return (Data.Aeson.toJSON (Dhall.Map.toMap a'))
         Dhall.Core.UnionLit _ b _ -> loop b
         _ -> Left (Unsupported e)
 
-toOrderedList :: Ord k => InsOrdHashMap k v -> [(k, v)]
+toOrderedList :: Ord k => Dhall.Map.Map k v -> [(k, v)]
 toOrderedList =
         Data.List.sortBy (Data.Ord.comparing fst)
-    .   Data.HashMap.Strict.toList
-    .   Data.HashMap.Strict.InsOrd.toHashMap
+    .   Dhall.Map.toList
 
 -- | Omit record fields that are @null@
 omitNull :: Value -> Value
@@ -524,10 +523,10 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
 
             toKeyValue :: Expr s X -> Maybe (Text, Expr s X)
             toKeyValue (Dhall.Core.RecordLit m) = do
-                guard (Data.HashMap.Strict.InsOrd.size m == 2)
+                guard (length m == 2)
 
-                key   <- Data.HashMap.Strict.InsOrd.lookup mapKey   m
-                value <- Data.HashMap.Strict.InsOrd.lookup mapValue m
+                key   <- Dhall.Map.lookup mapKey   m
+                value <- Dhall.Map.lookup mapValue m
 
                 keyText <- case key of
                     Dhall.Core.TextLit (Dhall.Core.Chunks [] keyText) ->
@@ -545,10 +544,10 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
                     [] ->
                         case a of
                             Just (Dhall.Core.Record m) -> do
-                                guard (Data.HashMap.Strict.InsOrd.size m == 2)
-                                guard (Data.HashMap.Strict.InsOrd.member mapKey   m)
-                                guard (Data.HashMap.Strict.InsOrd.member mapValue m)
-                                return (Dhall.Core.RecordLit Data.HashMap.Strict.InsOrd.empty)
+                                guard (length m == 2)
+                                guard (Dhall.Map.member mapKey   m)
+                                guard (Dhall.Map.member mapValue m)
+                                return (Dhall.Core.RecordLit mempty)
                             _ -> do
                                 empty
 
@@ -556,7 +555,7 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
                         keyValues <- traverse toKeyValue elements
 
                         let recordLiteral =
-                                Data.HashMap.Strict.InsOrd.fromList keyValues
+                                Dhall.Map.fromList keyValues
 
                         return (Dhall.Core.RecordLit recordLiteral)
 
