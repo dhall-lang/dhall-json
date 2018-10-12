@@ -174,16 +174,15 @@ module Dhall.JSON (
 import Control.Applicative (empty, (<|>))
 import Control.Monad (guard)
 import Control.Exception (Exception, throwIO)
-import Data.Aeson (Value(..))
-import Data.Foldable (length)
+import Data.Aeson (Value(..), ToJSON(..))
 import Data.Monoid ((<>), mempty)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 import Dhall.Core (Expr)
 import Dhall.TypeCheck (X)
+import Dhall.Map (Map)
 import Options.Applicative (Parser)
 
-import qualified Data.Aeson
 import qualified Data.Foldable
 import qualified Data.HashMap.Strict
 import qualified Data.List
@@ -237,21 +236,21 @@ dhallToJSON :: Expr s X -> Either CompileError Value
 dhallToJSON e0 = loop (Dhall.Core.normalize e0)
   where
     loop e = case e of 
-        Dhall.Core.BoolLit a -> return (Data.Aeson.toJSON a)
-        Dhall.Core.NaturalLit a -> return (Data.Aeson.toJSON a)
-        Dhall.Core.IntegerLit a -> return (Data.Aeson.toJSON a)
-        Dhall.Core.DoubleLit a -> return (Data.Aeson.toJSON a)
+        Dhall.Core.BoolLit a -> return (toJSON a)
+        Dhall.Core.NaturalLit a -> return (toJSON a)
+        Dhall.Core.IntegerLit a -> return (toJSON a)
+        Dhall.Core.DoubleLit a -> return (toJSON a)
         Dhall.Core.TextLit (Dhall.Core.Chunks [] a) -> do
-            return (Data.Aeson.toJSON a)
+            return (toJSON a)
         Dhall.Core.ListLit _ a -> do
             a' <- traverse loop a
-            return (Data.Aeson.toJSON a')
+            return (toJSON a')
         Dhall.Core.OptionalLit _ a -> do
             a' <- traverse loop a
-            return (Data.Aeson.toJSON a')
+            return (toJSON a')
         Dhall.Core.Some a -> do
             a' <- loop a
-            return (Data.Aeson.toJSON a')
+            return (toJSON a')
         Dhall.Core.App Dhall.Core.None _ -> do
             return Data.Aeson.Null
         Dhall.Core.RecordLit a ->
@@ -277,7 +276,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
                     let taggedValue =
                             Dhall.Map.fromList
                                 [   (   field
-                                    ,   Data.Aeson.toJSON alternativeName
+                                    ,   toJSON alternativeName
                                     )
                                 ,   (   nestedField
                                     ,   contents'
@@ -321,7 +320,7 @@ dhallToJSON e0 = loop (Dhall.Core.normalize e0)
         Dhall.Core.UnionLit _ b _ -> loop b
         _ -> Left (Unsupported e)
 
-toOrderedList :: Ord k => Dhall.Map.Map k v -> [(k, v)]
+toOrderedList :: Ord k => Map k v -> [(k, v)]
 toOrderedList =
         Data.List.sortBy (Data.Ord.comparing fst)
     .   Dhall.Map.toList
@@ -523,7 +522,7 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
 
             toKeyValue :: Expr s X -> Maybe (Text, Expr s X)
             toKeyValue (Dhall.Core.RecordLit m) = do
-                guard (length m == 2)
+                guard (Data.Foldable.length m == 2)
 
                 key   <- Dhall.Map.lookup mapKey   m
                 value <- Dhall.Map.lookup mapValue m
@@ -544,7 +543,7 @@ convertToHomogeneousMaps (Conversion {..}) e0 = loop (Dhall.Core.normalize e0)
                     [] ->
                         case a of
                             Just (Dhall.Core.Record m) -> do
-                                guard (length m == 2)
+                                guard (Data.Foldable.length m == 2)
                                 guard (Dhall.Map.member mapKey   m)
                                 guard (Dhall.Map.member mapValue m)
                                 return (Dhall.Core.RecordLit mempty)
