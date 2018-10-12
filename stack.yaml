@@ -1,1 +1,7 @@
-resolver: lts-12.0
+resolver: lts-12.12
+extra-deps:
+  - github: dhall-lang/dhall-haskell
+    commit: 70425bd4fce49e7fc57ed94a622e1f72afd24663
+  - megaparsec-7.0.1
+  - repline-0.2.0.0
+  - serialise-0.2.0.0
