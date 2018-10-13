@@ -8,6 +8,7 @@ import Test.Tasty (TestTree)
 
 import qualified Control.Exception
 import qualified Data.Aeson
+import qualified Data.ByteString.Lazy
 import qualified Data.Text.IO
 import qualified Dhall.Import
 import qualified Dhall.JSON
@@ -49,9 +50,9 @@ issue48 = Test.Tasty.HUnit.testCase "Issue #48" assertion
             Left  exception   -> Control.Exception.throwIO exception
             Right actualValue -> return actualValue
 
-        result <- Data.Aeson.eitherDecodeFileStrict "./tasty/data/issue48.json"
+        bytes <- Data.ByteString.Lazy.readFile "./tasty/data/issue48.json"
 
-        expectedValue <- case result of
+        expectedValue <- case Data.Aeson.eitherDecode bytes of
             Left  string        -> fail string
             Right expectedValue -> return expectedValue
 
