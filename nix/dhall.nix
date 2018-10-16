@@ -1,8 +1,8 @@
 { mkDerivation, ansi-terminal, base, bytestring, case-insensitive
 , cborg, containers, contravariant, criterion, cryptonite, deepseq
-, Diff, directory, doctest, exceptions, fetchgit, filepath
-, haskeline, http-client, http-client-tls, lens-family-core
-, megaparsec, memory, mockery, mtl, optparse-applicative, parsers
+, Diff, directory, doctest, exceptions, filepath, haskeline
+, http-client, http-client-tls, lens-family-core, megaparsec
+, memory, mockery, mtl, optparse-applicative, parsers
 , prettyprinter, prettyprinter-ansi-terminal, QuickCheck
 , quickcheck-instances, repline, scientific, serialise, stdenv
 , tasty, tasty-hunit, tasty-quickcheck, template-haskell, text
@@ -10,12 +10,8 @@
 }:
 mkDerivation {
   pname = "dhall";
-  version = "1.17.0";
-  src = fetchgit {
-    url = "https://github.com/dhall-lang/dhall-haskell.git";
-    sha256 = "0pivzmmx7qlkqkan0xzjm0il114lxhvpwwlvnc6fdfjaawvgb5bg";
-    rev = "afffa17be44047169cfb335a65ebb63d9d7a7868";
-  };
+  version = "1.18.0";
+  sha256 = "b528ecff4f757fa085f61636ffb8a6eb90c761106d7d20bd735bee48a6abab94";
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
