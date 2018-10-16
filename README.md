@@ -1,4 +1,4 @@
-# `dhall-json 1.2.3`
+# `dhall-json 1.2.4`
 
 [![Build Status](https://travis-ci.org/dhall-lang/dhall-json.png)](https://travis-ci.org/dhall-lang/dhall-json.png)
 [![Hackage](https://img.shields.io/hackage/v/dhall-json.svg)](https://hackage.haskell.org/package/dhall-json)

@@ -1,22 +1,23 @@
 { mkDerivation, aeson, aeson-pretty, base, bytestring, dhall
-, insert-ordered-containers, optparse-applicative, stdenv, tasty
-, tasty-hunit, text, unordered-containers, yaml
+, optparse-applicative, stdenv, tasty, tasty-hunit, text
+, unordered-containers, vector, yaml
 }:
 mkDerivation {
   pname = "dhall-json";
-  version = "1.2.3";
+  version = "1.2.4";
   src = ./..;
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    aeson base dhall insert-ordered-containers optparse-applicative
-    text unordered-containers
+    aeson base dhall optparse-applicative text unordered-containers
   ];
   executableHaskellDepends = [
     aeson aeson-pretty base bytestring dhall optparse-applicative text
-    yaml
+    vector yaml
   ];
-  testHaskellDepends = [ aeson base dhall tasty tasty-hunit text ];
+  testHaskellDepends = [
+    aeson base bytestring dhall tasty tasty-hunit text
+  ];
   description = "Compile Dhall to JSON or YAML";
   license = stdenv.lib.licenses.bsd3;
 }

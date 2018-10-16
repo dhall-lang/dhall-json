@@ -1,3 +1,15 @@
+1.2.4
+
+* Build against `dhall-1.18.0`
+    * See: https://github.com/dhall-lang/dhall-json/pull/61
+    * See: https://github.com/dhall-lang/dhall-json/pull/63
+    * See: https://github.com/dhall-lang/dhall-json/pull/67
+* New `dhall-to-yaml` `--documents` flag for generating split documents
+    * See: https://github.com/dhall-lang/dhall-json/pull/59
+* Build against `yaml-0.10.2.0`
+    * This improves the multi-line string literals in generated YAML
+    * See: https://github.com/dhall-lang/dhall-json/pull/57
+
 1.2.3
 
 * Correctly handle nested association lists
