@@ -9,6 +9,9 @@ let
           let
             extension =
               haskellPackagesNew: haskellPackagesOld: {
+                dhall =
+                  pkgs.haskell.lib.dontCheck haskellPackagesOld.dhall;
+
                 dhall-json =
                   pkgsNew.haskell.lib.failOnAllWarnings
                     (pkgsNew.haskell.lib.overrideCabal
