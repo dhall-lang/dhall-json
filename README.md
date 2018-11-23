@@ -1,5 +1,9 @@
 # `dhall-json 1.2.4`
 
+This repository has moved to:
+
+* https://github.com/dhall-lang/dhall-haskell/tree/master/dhall-json
+
 [![Build Status](https://travis-ci.org/dhall-lang/dhall-json.png)](https://travis-ci.org/dhall-lang/dhall-json.png)
 [![Hackage](https://img.shields.io/hackage/v/dhall-json.svg)](https://hackage.haskell.org/package/dhall-json)
 
